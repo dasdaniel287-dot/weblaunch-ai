@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import fs from 'fs';
+import http from 'http';
 import path from 'path';
 import {createExpressApp} from './server/app.ts';
 import {initDatabase} from './server/db.ts';
@@ -10,7 +11,8 @@ dotenv.config();
 async function startServer() {
   const ctx = initDatabase();
   const app = createExpressApp(ctx);
-  const port = Number(process.env.PORT) || 3000;
+  const httpServer = http.createServer(app);
+  const port = Number(process.env.APP_PORT) || 3000;
 
   if (process.env.NODE_ENV === 'production') {
     const distDir = path.resolve(process.cwd(), 'dist');
@@ -23,10 +25,33 @@ async function startServer() {
     });
   } else {
     const {createServer: createViteServer} = await import('vite');
+    const hmrEnabled = process.env.DISABLE_HMR !== 'true';
     const vite = await createViteServer({
-      server: {middlewareMode: true},
+      server: {
+        middlewareMode: true,
+        ws: hmrEnabled ? {server: httpServer} : false,
+        hmr: hmrEnabled,
+      },
       appType: 'spa',
     });
+
+    if (!hmrEnabled) {
+      app.get('/@vite/client', async (_req, res, next) => {
+        try {
+          const result = await vite.transformRequest('/@vite/client');
+          if (!result) {
+            return next();
+          }
+          const patched = result.code.replace(
+            'transport.connect(createHMRHandler(handleMessage));',
+            '/* HMR WebSocket disabled via DISABLE_HMR=true */',
+          );
+          res.status(200).set({'Content-Type': 'application/javascript; charset=utf-8'}).send(patched);
+        } catch (err) {
+          next(err);
+        }
+      });
+    }
 
     app.use(vite.middlewares);
 
@@ -45,7 +70,7 @@ async function startServer() {
     });
   }
 
-  app.listen(port, '0.0.0.0', () => {
+  httpServer.listen(port, '0.0.0.0', () => {
     console.log(`WebLaunch AI server listening on http://0.0.0.0:${port}`);
   });
 }
