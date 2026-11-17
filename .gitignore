@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+.env.local
+.weblaunch_data/
+*.log
+.DS_Store

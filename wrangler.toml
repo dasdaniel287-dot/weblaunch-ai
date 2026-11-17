@@ -1,0 +1,23 @@
+name = "weblaunch-ai"
+main = "worker/index.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+MAX_UPLOAD_BYTES = "52428800"
+MAX_FILES_PER_SITE = "250"
+
+[[r2_buckets]]
+binding = "SITES_BUCKET"
+bucket_name = "weblaunch-sites"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "weblaunch-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"

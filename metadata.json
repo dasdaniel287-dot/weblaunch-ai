@@ -1,0 +1,6 @@
+{
+  "name": "WebLaunch AI",
+  "description": "One-click website publishing platform. Upload HTML, assets, or ZIP archives and publish live online in seconds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
